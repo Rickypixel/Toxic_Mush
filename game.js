@@ -1,10 +1,17 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-// Игрок
+// Получение данных из localStorage
 let playerName = localStorage.getItem('playerName') || "kkk_1259";
 let balance = parseInt(localStorage.getItem('balance')) || 0;
 let farmTime = parseInt(localStorage.getItem('farmTime')) || (8 * 60 * 60); // 8 часов в секундах
+
+// Функция для сохранения данных в localStorage
+function saveGameData() {
+    localStorage.setItem('playerName', playerName);
+    localStorage.setItem('balance', balance.toString());  // Сохраняем как строку
+    localStorage.setItem('farmTime', farmTime.toString()); // Сохраняем как строку
+}
 
 // Таймер для фарминга
 let isFarming = false;
@@ -132,12 +139,12 @@ function startFarming() {
         farmTime--;
         if (farmTime <= 0) {
             balance += 100;
-            localStorage.setItem('balance', balance);  // Сохраняем баланс
+            saveGameData();  // Сохраняем баланс
             farmTime = 8 * 60 * 60; // Сбрасываем таймер
             isFarming = false;
             clearInterval(farmInterval);
         }
-        localStorage.setItem('farmTime', farmTime);  // Сохраняем время
+        saveGameData();  // Сохраняем время
         drawUI();  // Перерисовываем интерфейс
     }, 1000);
 }
@@ -165,6 +172,29 @@ function resizeCanvas() {
     drawUI();
 }
 
+// Получаем имя игрока из Telegram (например, через URL)
+function setPlayerName(name) {
+    playerName = name;
+    saveGameData();  // Сохраняем имя
+}
+
+// Функция для получения параметров из URL
+function getParameterByName(name) {
+    const url = window.location.href;
+    const regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)');
+    const results = regex.exec(url);
+    if (!results) return null;
+    if (!results[2]) return '';
+    return decodeURIComponent(results[2].replace(/\+/g, ' '));
+}
+
+// Проверка имени из URL
+const telegramPlayerName = getParameterByName('username');
+
+if (telegramPlayerName) {
+    setPlayerName(telegramPlayerName);
+}
+
 // Запуск игры
 function startGame() {
     canvas.addEventListener('click', handleCanvasClick);
@@ -176,12 +206,3 @@ window.addEventListener('resize', resizeCanvas);
 // Инициализация размера холста
 resizeCanvas();
 startGame();
-
-// Получаем имя игрока из Telegram (например, через URL)
-function setPlayerName(name) {
-    playerName = name;
-    localStorage.setItem('playerName', playerName);  // Сохраняем имя
-}
-
-// Пример вызова функции
-setPlayerName("Имя_пользователя");  // Замените на реальное имя
